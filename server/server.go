@@ -43,6 +43,14 @@ func (srv *ChatterBoxSrv) Run() error {
 	}
 }
 
+// TODO: Client connects to the server, opens socket, connecting them to an event listener
+// Client can send and receive messages via this socket
+// Upon receipt of a message, the server persists it and emits an event
+// Event is consumed in the socket loop, sending the message to the connected client
+// Extension:
+// Support https
+// Microservices, managed by k8s
+
 func handle(conn net.Conn) {
 	defer conn.Close()
 
