@@ -2,31 +2,35 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"context"
+	"encoding/json"
+	"github.com/gorilla/websocket"
+	"github.com/wesrobin/chat-er-x3/api_types"
 	"log"
-	"net"
+	"math/rand"
+	"net/http"
 	"os"
+	"strconv"
+	"time"
 )
 
 func main() {
-	conn, err := net.Dial("tcp", "localhost:8080")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
+	ctx, cFn := context.WithCancel(context.Background())
 
-	msg := "hello there"
-	_, err = conn.Write([]byte(msg))
-	if err != nil {
-		log.Fatal(err)
-	}
+	r := rand.Int31()
+	userID := "user" + strconv.Itoa(int(r))
 
-	rspBuf := make([]byte, 1024)
-	n, err := conn.Read(rspBuf)
-	if err != nil {
-		log.Fatal(err)
-	}
+	c := webSocket(userID)
+	defer cFn()
+	defer func(c *websocket.Conn) {
+		err := c.Close()
+		if err != nil {
+			log.Print(err.Error())
+		}
+	}(c)
 
-	log.Print("Rsp", string(rspBuf[:n]))
+	go listen(ctx, c)
 
 	for {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -44,16 +48,51 @@ func main() {
 			return
 		}
 
-		_, err := conn.Write([]byte(inp))
+		req := api_types.MessageRequest{
+			User: userID,
+			Msg: api_types.Message{
+				Msg:    inp,
+				SentAt: time.Now(),
+			},
+		}
+		requestBody, err := json.Marshal(req)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error encoding JSON: %v", err)
 		}
 
-		n, err := conn.Read(rspBuf)
+		rsp, err := http.Post("http://localhost:8080/message", "application/json", bytes.NewBuffer(requestBody))
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err.Error())
 		}
-
-		log.Print("Rsp: ", string(rspBuf[:n]))
+		err = rsp.Body.Close()
+		if err != nil {
+			log.Print(err.Error())
+		}
+		log.Print("Response code: ", rsp.StatusCode)
 	}
+}
+
+func listen(ctx context.Context, c *websocket.Conn) {
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+		_, msg, err := c.ReadMessage()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Print("Rsp", string(msg))
+	}
+}
+
+func webSocket(user string) *websocket.Conn {
+	head := make(http.Header)
+	head.Set(api_types.HeaderUserID, user)
+	conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:8080/ws", head)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return conn
 }

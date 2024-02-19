@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -11,7 +12,7 @@ import (
 
 func main() {
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(stop, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL) // Not working?
 
 	srv, err := server.New()
 	if err != nil {
@@ -19,7 +20,10 @@ func main() {
 	}
 	defer srv.Kill()
 
-	srv.Run()
+	err = srv.Start(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	<-stop
 }
