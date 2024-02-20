@@ -13,17 +13,8 @@ type ConnRequest struct {
 	RoomID int64  `json:"room_id"`
 }
 
-type MessageRequest struct {
-	User string  `json:"user"`
-	Msg  Message `json:"msg"`
-}
-
-type MessageResponse struct {
-	User string  `json:"user"`
-	Msg  Message `json:"msg"`
-}
-
 type Message struct {
+	User   string    `json:"user"`
 	Msg    string    `json:"message"`
 	SentAt time.Time `json:"sent_at"`
 }
