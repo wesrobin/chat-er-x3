@@ -1,13 +1,14 @@
-package server
+package main
 
 import (
 	"encoding/json"
+	"log"
+	"net/http"
+
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/wesrobin/chat-er-x3/api_types"
-	"log"
-	"net/http"
 )
 
 func messageHander(srv *ChatterBoxSrv) (gin.HandlerFunc, error) {

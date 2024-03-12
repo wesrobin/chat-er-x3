@@ -58,7 +58,7 @@ func main() {
 			log.Fatalf("Error encoding JSON: %v", err)
 		}
 
-		rsp, err := http.Post("http://127.0.0.1:8080/message", "application/json", bytes.NewBuffer(requestBody))
+		rsp, err := http.Post("http://127.0.0.1:8071/message", "application/json", bytes.NewBuffer(requestBody))
 		if err != nil {
 			log.Print(err.Error())
 		}
@@ -87,7 +87,7 @@ func listen(ctx context.Context, c *websocket.Conn) {
 func webSocket(user string) *websocket.Conn {
 	head := make(http.Header)
 	head.Set(api_types.HeaderUserID, user)
-	conn, _, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8080/ws", head)
+	conn, _, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8071/ws", head)
 	if err != nil {
 		log.Fatal(err)
 	}

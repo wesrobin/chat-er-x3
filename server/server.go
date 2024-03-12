@@ -1,16 +1,17 @@
-package server
+package main
 
 import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"log"
+	"net/http"
+	"sync"
+
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/wesrobin/chat-er-x3/api_types"
-	"log"
-	"net/http"
-	"sync"
 )
 
 const (
@@ -35,7 +36,7 @@ func (srv *ChatterBoxSrv) Start(ctx context.Context) error {
 	r := gin.Default()
 	registerHandlers(srv, r)
 	go func() {
-		err := r.Run("localhost:8080")
+		err := r.Run("0.0.0.0:8071")
 		if err != nil {
 			log.Fatalf("fatal err: %v", err)
 		}
@@ -44,7 +45,6 @@ func (srv *ChatterBoxSrv) Start(ctx context.Context) error {
 	log.Print("HTTP server listening on port 8080")
 
 	go srv.ListenKafkaForever()
-	log.Printf("Listening to kafka topic %v", topic)
 
 	return nil
 }
@@ -85,6 +85,8 @@ func (srv *ChatterBoxSrv) ListenKafkaForever() {
 		log.Fatalf("Error creating partition consumer: %v", err)
 	}
 	defer partitionConsumer.Close()
+
+	log.Printf("Listening to kafka topic %v", topic)
 
 	for {
 		select {
